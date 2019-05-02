@@ -1,5 +1,6 @@
 
 How to run the project:
+
  open terminal in project folder
  type py project.py/python project.pt (depending on  python version)
 
