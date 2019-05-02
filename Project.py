@@ -26,32 +26,32 @@ import multiprocessing
 
 def attackIntance(label):
 
-    # Define attack categories by dataset labels
-    normal = ['normal']
-    dos = ['neptune', 'back', 'teardrop', 'smurf', 'pod', 'land']
-    probe = ['portsweep', 'satan', 'ipsweep', 'nmap']
-    r2l = ['warezclient', 'multihop', 'ftp_write', 'imap', 'guess_passwd', 'warezmaster', 'spy', 'phf']
-    u2r = ['buffer_overflow', 'loadmodule', 'rootkit', 'perl']
+	# Define attack categories by dataset labels
+	normal = ['normal']
+	dos = ['neptune', 'back', 'teardrop', 'smurf', 'pod', 'land']
+	probe = ['portsweep', 'satan', 'ipsweep', 'nmap']
+	r2l = ['warezclient', 'multihop', 'ftp_write', 'imap', 'guess_passwd', 'warezmaster', 'spy', 'phf']
+	u2r = ['buffer_overflow', 'loadmodule', 'rootkit', 'perl']
 
-    # Return the relevant attack category for each given label
-    if label in normal:
-        return 'normal'
-    elif label in dos:
-        return 'dos'
-    elif label in probe:
-        return 'probe'
-    elif label in r2l:
-        return 'r2l'
-    elif label in u2r:
-        return 'u2r'
+	# Return the relevant attack category for each given label
+	if label in normal:
+		return 'normal'
+	elif label in dos:
+		return 'dos'
+	elif label in probe:
+		return 'probe'
+	elif label in r2l:
+		return 'r2l'
+	elif label in u2r:
+		return 'u2r'
 
 def attackDF(df):
 
-    # Apply attackIntance function to given dataframe
-    df['attack'] = df.apply(lambda row: attackIntance(row.label), axis=1)
+	# Apply attackIntance function to given dataframe
+	df['attack'] = df.apply(lambda row: attackIntance(row.label), axis=1)
 
-    # Return dataframe after attack categorisation
-    return df
+	# Return dataframe after attack categorisation
+	return df
 
 
 # ## Parallelise Dataframe Operations
@@ -61,25 +61,25 @@ def attackDF(df):
 
 def parallelize_dataframe(df, func):
 
-    # Number of cores on your machine
-    num_cores = multiprocessing.cpu_count() - 1
+	# Number of cores on your machine
+	num_cores = multiprocessing.cpu_count() - 1
 
-    # Number of partitions to split dataframe
-    num_partitions = num_cores
+	# Number of partitions to split dataframe
+	num_partitions = num_cores
 
-    # Split dataframe
-    df_split = np.array_split(df, num_partitions)
+	# Split dataframe
+	df_split = np.array_split(df, num_partitions)
 
-    # Create multiprocesing pool using number of cores
-    pool = multiprocessing.Pool(num_cores)
-    df = pd.concat(pool.map(func, df_split))
+	# Create multiprocesing pool using number of cores
+	pool = multiprocessing.Pool(num_cores)
+	df = pd.concat(pool.map(func, df_split))
 
-    # Close and join pool
-    pool.close()
-    pool.join()
+	# Close and join pool
+	pool.close()
+	pool.join()
 
-    # Return merged dataframe
-    return df
+	# Return merged dataframe
+	return df
 
 
 # ## Cluster & Compare Labels
@@ -88,46 +88,46 @@ def parallelize_dataframe(df, func):
 
 
 def ClusterANDCompareOptimised(df, attack, num_clusters):
-    
-    # Get instances with the label normal
-    df_filtered = df.loc[(df['attack'] == attack)]
 
-    labels = df_filtered['label']
-    del df_filtered['label']
+	# Get instances with the label normal
+	df_filtered = df.loc[(df['attack'] == attack)]
 
-    attacks = df_filtered['attack']
-    del df_filtered['attack']
+	labels = df_filtered['label']
+	del df_filtered['label']
 
-    df_filtered_values = df_filtered.values
-    
-    # Standard Scalar
-    scaler = StandardScaler()
-    df_filtered_values_scaled = scaler.fit_transform(df_filtered_values)
+	attacks = df_filtered['attack']
+	del df_filtered['attack']
 
-    # Apply PCA for 3 features
-    pca_model = PCA(n_components=3)
-    pca_model.fit(df_filtered_values_scaled)
-    df_filtered_values_pca = pca_model.transform(df_filtered_values_scaled)
+	df_filtered_values = df_filtered.values
 
-    model = KMeans(n_clusters=num_clusters, max_iter=1000)
-    model.fit(df_filtered_values_pca)
-    y = model.predict(df_filtered_values_pca)
+	# Standard Scalar
+	scaler = StandardScaler()
+	df_filtered_values_scaled = scaler.fit_transform(df_filtered_values)
 
-    predicted_labels = (y).tolist()
+	# Apply PCA for 3 features
+	pca_model = PCA(n_components=3)
+	pca_model.fit(df_filtered_values_scaled)
+	df_filtered_values_pca = pca_model.transform(df_filtered_values_scaled)
 
-    actual_labels = labels.tolist()
-    
-    df_filtered['predicted'] = predicted_labels
-    df_filtered['label'] = labels
-    df_filtered['attack'] = attacks
-    
-    # Print count of unique labels per each unique cluster
-    for predicted_label in df_filtered['predicted'].unique():
-        print('----------------------------------------------------------------------\nPredicted Cluster:', predicted_label)
-        filtered = df_filtered.loc[df_filtered['predicted'] == predicted_label]
-        print('\nUnique Counts:\n', filtered.label.value_counts())
-        
-    return actual_labels, predicted_labels, scaler, pca_model, df_filtered
+	model = KMeans(n_clusters=num_clusters, max_iter=1000)
+	model.fit(df_filtered_values_pca)
+	y = model.predict(df_filtered_values_pca)
+
+	predicted_labels = (y).tolist()
+
+	actual_labels = labels.tolist()
+
+	df_filtered['predicted'] = predicted_labels
+	df_filtered['label'] = labels
+	df_filtered['attack'] = attacks
+
+	# Print count of unique labels per each unique cluster
+	for predicted_label in df_filtered['predicted'].unique():
+		print('----------------------------------------------------------------------\nPredicted Cluster:', predicted_label)
+		filtered = df_filtered.loc[df_filtered['predicted'] == predicted_label]
+		print('\nUnique Counts:\n', filtered.label.value_counts())
+
+	return actual_labels, predicted_labels, scaler, pca_model, df_filtered
 
 
 # ## Testing
@@ -135,28 +135,39 @@ def ClusterANDCompareOptimised(df, attack, num_clusters):
 # In[9]:
 
 
-def testing(df, label, model):
-    
-    df_filtered = df.loc[df['label']==label]
-    del df_filtered['label']
-    del df_filtered['attack']
+def testing(df, label, model,id):
 
-    df_filtered_values = df_filtered.values
+	df_filtered = df.loc[df['label']==label]
+	del df_filtered['label']
+	del df_filtered['attack']
 
-    # Standard Scalar
-    scaler = StandardScaler()
-    df_filtered_scaled = scaler.fit_transform(df_filtered_values)
+	df_filtered_values = df_filtered.values
 
-    # Apply PCA for 3 features
-    pca_model = PCA(n_components=3)
-    pca_model.fit(df_filtered_scaled)
-    df_normal_test_pca = pca_model.transform(df_filtered_scaled)
+	# Standard Scalar
+	scaler = StandardScaler()
+	df_filtered_scaled = scaler.fit_transform(df_filtered_values)
 
-    predicted_labels = model.predict(df_normal_test_pca)
+	# Apply PCA for 3 features
+	pca_model = PCA(n_components=3)
+	pca_model.fit(df_filtered_scaled)
+	df_normal_test_pca = pca_model.transform(df_filtered_scaled)
 
-    values, counts = np.unique(predicted_labels, return_counts=True)
-    
-    return list(zip(values, counts))
+	predicted_labels = model.predict(df_normal_test_pca)
+
+	values, counts = np.unique(predicted_labels, return_counts=True)
+	# print(counts)
+	global Samplesize
+	c = [0,0,0,0]
+	# print(values,counts)
+	for value in values:
+		c[value] = counts[np.where(values == value)[0][0]]
+	# print(c)
+	precision = c[id]/sum(c)
+	recall = c[id]/df.label.tolist().count(label)
+	# print(df.label.tolist().count(label))
+	# print("\nprecision:",precision,"  recall:",recall)
+
+	return list(zip(values, counts)),precision,recall
 
 
 # # Code
@@ -204,13 +215,13 @@ df.head()
 # In[11]:
 
 
-normal_actual_labels, normal_predicted_labels, normal_scaler, normal_pca_model, normal_df_clustered = ClusterANDCompareOptimised(df, 'normal', 2)
+normal_actual_labels, normal_predicted_labels, normal_scaler, normal_pca_model, normal_df_clustered = ClusterANDCompareOptimised(df, 'normal', 10)
 
 
 # In[12]:
 
 
-# Filter out anaomly normal 
+# Filter out anaomly normal
 normal_df_clustered = normal_df_clustered.loc[normal_df_clustered['predicted']==0]
 del normal_df_clustered['predicted']
 normal_df_clustered.head()
@@ -227,7 +238,7 @@ dos_actual_labels, dos_predicted_labels, dos_scaler, dos_pca_model, dos_df_clust
 # In[14]:
 
 
-df_dos_filtered = df.loc[(df['label'] == 'back')|(df['label'] == 'land')|(df['label'] == 'pod')]
+df_dos_filtered = df.loc[(df['label'] == 'pod')|(df['label'] == 'back')|(df['label'] == 'teardrop')]
 dos_actual_labels_filtered, dos_predicted_labels_filtered, dos_scaler_filtered, dos_pca_model_filtered, dos_df_clustered_filtered = ClusterANDCompareOptimised(df_dos_filtered, 'dos', 3)
 del dos_df_clustered_filtered['predicted']
 
@@ -247,11 +258,10 @@ dos_df_clustered_filtered.head()
 
 
 # Choose n elements from each label
-Samplesize = 19  #number of samples that you want
+Samplesize = 200  #number of samples that you want
 normal_df_clustered = normal_df_clustered.groupby('label', as_index=False).apply(lambda array: array.loc[np.random.choice(array.index, Samplesize, False),:])
 
 # Choose n elements from each label
-Samplesize = 19  #number of samples that you want
 dos_df_clustered_filtered = dos_df_clustered_filtered.groupby('label', as_index=False).apply(lambda array: array.loc[np.random.choice(array.index, Samplesize, False),:])
 
 normal_labels = normal_df_clustered['label']
@@ -280,9 +290,9 @@ dos_df_clustered_filtered_values = dos_df_clustered_filtered.values
 dos_df_clustered_filtered_values_normal_scaled = dos_scaler_filtered.transform(dos_df_clustered_filtered_values)
 dos_df_clustered_filtered_values_normal_pca = dos_pca_model_filtered.transform(dos_df_clustered_filtered_values_normal_scaled)
 
-concatenated_data = np.concatenate((normal_df_clustered_values_pca,                                     dos_df_clustered_filtered_values_normal_pca))
+concatenated_data = np.concatenate((normal_df_clustered_values_pca,dos_df_clustered_filtered_values_normal_pca))
 
-model = KMeans(n_clusters=4, max_iter=1000)
+model = KMeans(n_clusters=4, max_iter=2)
 model.fit(concatenated_data)
 y = model.predict(concatenated_data)
 
@@ -296,41 +306,57 @@ df_filtered['predicted'] = predicted_labels
 df_filtered['label'] = labels
 df_filtered['attack'] = attacks
 
+def calcPrecisionRecall(label):
+	global Samplesize
+	if len(label)==1:
+		return 1,label[0]/Samplesize
+	else:
+		temp = sum(label)
+		return label[0]/temp,label[0]/Samplesize
+
+
+totalprecision = 0
+totalrecall = 0
+labels = dict()
 # Print count of unique labels per each unique cluster
 for predicted_label in df_filtered['predicted'].unique():
-    print('----------------------------------------------------------------------\nPredicted Cluster:', predicted_label)
-    filtered = df_filtered.loc[df_filtered['predicted'] == predicted_label]
-    print('\nUnique Counts:\n', filtered.label.value_counts())
-
+	print('----------------------------------------------------------------------\nPredicted Cluster:', predicted_label)
+	filtered = df_filtered.loc[df_filtered['predicted'] == predicted_label]
+	print('\nUnique Counts:\n', filtered.label.value_counts())
+	# print("precision -->",calcPrecisionRecall(filtered.label.value_counts()),"<-- recall\n")
+	labels[(max(set(filtered.label.tolist()), key = filtered.label.tolist().count))] =predicted_label
+	(p,r) = calcPrecisionRecall(filtered.label.value_counts())
+	totalprecision+=p
+	totalrecall+=r
 
 # ## Testing Datapoints
 
 # In[18]:
 
+print("\n\n\n\nclustering precision:",totalprecision/4," clustering recall:",totalrecall/4)
 
-testing(df, 'normal', model)
+z1,p1,r1 = testing(df, 'normal', model,labels['normal'])
 
 
 # In[19]:
 
 
-testing(df, 'back', model)
+z2,p2,r2 = testing(df, 'back', model,labels['back'])
 
 
 # In[20]:
 
 
-testing(df, 'land', model)
+z3,p3,r3 = testing(df, 'teardrop', model,labels['teardrop'])
 
 
 # In[21]:
 
 
-testing(df, 'pod', model)
+z4,p4,r4 = testing(df, 'pod', model,labels['pod'])
 
+# print(p1,p2,p3,p4,"\n",r1,r2,r3,r4)
+
+print("\n\n\n\nmodel precision:",(p1+p2+p3+p4)/4," model recall:",(r1+r2+r3+r4)/4)
 
 # In[ ]:
-
-
-
-
